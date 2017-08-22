@@ -7,19 +7,35 @@ import time
 import csv
 import json
 import re
+import sys
+
+# WRITTEN IN PYTHON 2.7
+# 2017.08.22 Edward Rha
+# This code is written only for my own educational use to gather Korean news articles from naver news.
 
 # example target: http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=469&aid=0000227942
 # target variables
-source_id = "021"
-source_name = u'\ubb38\ud654\uc77c\ubcf4'
-a_id_prefix = "000"
-start_id_int = 2321500 #starts with 000 1011000
-end_id_int = 2324813 #starts with 000 1019559
-Delay = 0.0
+source_id_list = ['005', '020', '021', '022', '023', '025', '028', '032', '081', '469']
+source_id_names = [u'\uAD6D\uBBFC\uC77C\uBCF4', u'\uB3D9\uC544\uC77C\uBCF4', u'\uBB38\uD654\uC77C\uBCF4',\
+                    u'\uC138\uACC4\uC77C\uBCF4', u'\uC870\uC120\uC77C\uBCF4', u'\uC911\uC559\uC77C\uBCF4',\
+                    u'\uD55C\uACA8\uB840', u'\uACBD\uD5A5\uC2E0\uBB38', u'\uC11C\uC6B8\uC2E0\uBB38', u'\uD55C\uAD6D\uC77C\uBCF4']
+
+source_target_prefix = ["0000", "000", "000", "000", "000", "000", "000", "000", "000", "0000"]
+source_target_1year = [929000, 3000000, 2281500, 3090000, 3259000, 2639651, 2330000, 2714500, 2740000, 160000]
+source_target_end_1year = [999999, 3080999, 2321499, 3193999, 3299499, 2737999, 2373031, 2804499, 2839999, 219944]
+delay_list = [0.8, 0.65, 3.0, 0.45, 2.5, 0.5, 2.4, 0.55, 0.5,  1.1]
+
+# 5 will finish first, theoretically
+target = 0
+source_id = source_id_list[target]
+source_name = source_id_names[target] # Name of news source in Korean to save to database
+a_id_prefix = source_target_prefix[target]
+start_id_int = source_target_1year[target]
+end_id_int = source_target_end_1year[target]
+Delay = delay_list[target]
 
 # global
 error = 'error_msg 404'
-gija = '\xea\xb8\xb0\xec\x9e\x90'
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2225.0 Safari/537.36'}
 
 def Delayer(input_time):
@@ -28,12 +44,13 @@ def Delayer(input_time):
     time.sleep(Delay)
 
 def Get_Author(Contents):
+    gija = '\xea\xb8\xb0\xec\x9e\x90'
     Author = ""
     index = Contents.encode('utf-8').rfind(gija)
     if (index == -1) or ((index) < (len(Contents.encode('utf-8'))-200)):
         return Author
     else:
-        regex = r'.*\.+.*?\s?\w*?\s?(\w+)\s*\w*' + gija
+        regex = r'.*\.+.*?\s?\w*?\s?(' + '[\xea\xb0\x80-\xed\x9e\xa3]' + r'+)\s*\w*' + gija
         p = re.compile(unicode(regex,'utf-8'), re.UNICODE)
         if len(Contents) < 500:
             Contents = Contents[len(Contents)-100:]
@@ -54,8 +71,6 @@ def Get_Emotion(A_type, source_id, article_id):
     return Emotion_dict
 
 if __name__ == '__main__':
-    Approximate_time_hours = float(end_id_int - start_id_int) * 0.8 / 60 / 60
-    print "Approximate time in hours: ", Approximate_time_hours
     aid_list = range(start_id_int, end_id_int+1)
     shuffle(aid_list)
     progress_tracker = 0
@@ -100,7 +115,7 @@ if __name__ == '__main__':
         if r.content.find(error) != -1:
             errorcount+=1
             errorlist.append(i)
-            print '404 error ', progress_tracker, i
+            # print '404 error ', progress_tracker, i
             continue
         # Articles with ENTERTAIN template
         elif r.content.find('data-sid="ENTERTAIN"') != -1:
@@ -161,13 +176,13 @@ if __name__ == '__main__':
         else:
             exceptioncount+=1
             exceptionlist.append(i)
-            print 'Exception error ', progress_tracker, i
+            # print 'Exception error ', progress_tracker, i
             continue
 
         df.loc[df.shape[0]] = [source_name, title, Date, Author, Contents, article_id, A_type, Emotion]
         df
         progress_tracker+=1
-        print(progress_tracker)
+        # print(progress_tracker)
         Delayer(Delay)
     df['Date'] = pd.to_datetime(df['Date'])
 
@@ -186,3 +201,4 @@ if __name__ == '__main__':
             writer = csv.writer(text_file)
             writer.writerow(exceptionlist)
             article_id
+    print('DONE')
