@@ -1,27 +1,30 @@
 from bs4 import BeautifulSoup
+from random import random, shuffle
 import numpy as np
 import pandas as pd
 import requests
-import urllib
 import time
 import csv
-from random import random, shuffle
 import json
 import re
 
 # example target: http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=469&aid=0000227942
-source_id = "005"
-source_name = u'\uad6d\ubbfc\uc77c\ubcf4'
-gija = '\xea\xb8\xb0\xec\x9e\x90'
+# target variables
+source_id = "021"
+source_name = u'\ubb38\ud654\uc77c\ubcf4'
 a_id_prefix = "000"
-start_id_int = 1011000 #starts with 000 1011000
-end_id_int = 1019559 #starts with 000 1019559
+start_id_int = 2321500 #starts with 000 1011000
+end_id_int = 2324813 #starts with 000 1019559
+Delay = 0.0
+
+# global
 error = 'error_msg 404'
+gija = '\xea\xb8\xb0\xec\x9e\x90'
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2225.0 Safari/537.36'}
 
 def Delayer(input_time):
     Delay = input_time / np.exp(input_time * random())
-    print Delay
+    # print Delay
     time.sleep(Delay)
 
 def Get_Author(Contents):
@@ -97,6 +100,7 @@ if __name__ == '__main__':
         if r.content.find(error) != -1:
             errorcount+=1
             errorlist.append(i)
+            print '404 error ', progress_tracker, i
             continue
         # Articles with ENTERTAIN template
         elif r.content.find('data-sid="ENTERTAIN"') != -1:
@@ -157,13 +161,14 @@ if __name__ == '__main__':
         else:
             exceptioncount+=1
             exceptionlist.append(i)
+            print 'Exception error ', progress_tracker, i
             continue
 
         df.loc[df.shape[0]] = [source_name, title, Date, Author, Contents, article_id, A_type, Emotion]
         df
         progress_tracker+=1
         print(progress_tracker)
-        Delayer(3)
+        Delayer(Delay)
     df['Date'] = pd.to_datetime(df['Date'])
 
 
