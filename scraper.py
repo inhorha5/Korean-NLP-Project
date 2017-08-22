@@ -26,9 +26,10 @@ source_target_end_1year = [999999, 3080999, 2321499, 3193999, 3299499, 2737999, 
 delay_list = [0.8, 0.65, 3.0, 0.45, 2.5, 0.5, 2.4, 0.55, 0.5,  1.1]
 
 # 5 will finish first, theoretically
-target = 0
+target = int(sys.argv[1])
 source_id = source_id_list[target]
 source_name = source_id_names[target] # Name of news source in Korean to save to database
+print(source_name)
 a_id_prefix = source_target_prefix[target]
 start_id_int = source_target_1year[target]
 end_id_int = source_target_end_1year[target]
