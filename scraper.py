@@ -11,7 +11,11 @@ import sys
 
 # WRITTEN IN PYTHON 2.7
 # 2017.08.22 Edward Rha
-# This code is written only for my own educational use to gather Korean news articles from naver news.
+# This code is written for personal educational use.
+# This code gathers Korean news articles from Naver news.
+# This code will shuffle the scraping order and put delays inbetween
+
+# User must input target source when launching the script
 
 # example target: http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=469&aid=0000227942
 # target variables
@@ -19,23 +23,22 @@ source_id_list = ['005', '020', '021', '022', '023', '025', '028', '032', '081',
 source_id_names = [u'\uAD6D\uBBFC\uC77C\uBCF4', u'\uB3D9\uC544\uC77C\uBCF4', u'\uBB38\uD654\uC77C\uBCF4',\
                     u'\uC138\uACC4\uC77C\uBCF4', u'\uC870\uC120\uC77C\uBCF4', u'\uC911\uC559\uC77C\uBCF4',\
                     u'\uD55C\uACA8\uB840', u'\uACBD\uD5A5\uC2E0\uBB38', u'\uC11C\uC6B8\uC2E0\uBB38', u'\uD55C\uAD6D\uC77C\uBCF4']
+source_target_prefix = ["000", "000", "000", "000", "000", "000", "000", "000", "000", "0000"]
+source_target_1year = [1011000, 3081000, 2321500, 3194000, 3299500, 2738000, 2373032, 2804500, 2840000, 219945] # Start articles
+source_target_end_1year = [1019559, 3088691, 2324813, 3202400, 3306675, 2747105, 2376732, 2812318, 2847019, 227943] # End articles
+delay_list = [0.8, 0.65, 2.0, 0.45, 2.0, 0.5, 2.0, 0.55, 0.5,  1.1]
+# delay_list = [0.8, 0.65, 3.0, 0.45, 2.5, 0.5, 2.4, 0.55, 0.5,  1.1]
 
-source_target_prefix = ["0000", "000", "000", "000", "000", "000", "000", "000", "000", "0000"]
-source_target_1year = [929000, 3000000, 2281500, 3090000, 3259000, 2639651, 2330000, 2714500, 2740000, 160000]
-source_target_end_1year = [999999, 3080999, 2321499, 3193999, 3299499, 2737999, 2373031, 2804499, 2839999, 219944]
-delay_list = [0.8, 0.65, 3.0, 0.45, 2.5, 0.5, 2.4, 0.55, 0.5,  1.1]
 
-# 5 will finish first, theoretically
 target = int(sys.argv[1])
 source_id = source_id_list[target]
-source_name = source_id_names[target] # Name of news source in Korean to save to database
-print(source_name)
+source_name = source_id_names[target]
+# print(source_name)
 a_id_prefix = source_target_prefix[target]
 start_id_int = source_target_1year[target]
 end_id_int = source_target_end_1year[target]
 Delay = delay_list[target]
 
-# global
 error = 'error_msg 404'
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2225.0 Safari/537.36'}
 
@@ -51,10 +54,10 @@ def Get_Author(Contents):
     if (index == -1) or ((index) < (len(Contents.encode('utf-8'))-200)):
         return Author
     else:
-        regex = r'.*\.+.*?\s?\w*?\s?(' + '[\xea\xb0\x80-\xed\x9e\xa3]' + r'+)\s*\w*' + gija
+        regex = r'.*\.+.*?\s*?\w*?\s*?(' + '[\xea\xb0\x80-\xed\x9e\xa3]' + r'+)\s*\w*' + gija
         p = re.compile(unicode(regex,'utf-8'), re.UNICODE)
         if len(Contents) < 500:
-            Contents = Contents[len(Contents)-100:]
+            Contents = '.' + Contents[len(Contents)-150:]
         try:
             Author = p.match(Contents).group(1)
         except AttributeError:
@@ -134,8 +137,11 @@ if __name__ == '__main__':
             elif Date.encode('utf-8').find('\xec\x98\xa4\xed\x9b\x84')!=-1:
                 Date = Date.replace(u'\uc624\ud6c4 ', '') + ' PM'
                 Date = pd.to_datetime(Date).strftime('%Y-%m-%d %H:%M:%S')
+            [s.extract() for s in article_soup('script')]
             [s.extract() for s in article_soup('a')]
+            [b.replace_with("%s " % b.text) for b in article_soup('br')]
             Contents = article_soup.select('#articeBody')[0].text.replace("\t", "").replace("\n",'')
+            Contents = ' '.join(Contents.split())
             Author = Get_Author(Contents)
             Emotion = Get_Emotion(A_type, source_id, article_id)
         # Articles with SPORTS template
@@ -154,8 +160,11 @@ if __name__ == '__main__':
             elif Date.encode('utf-8').find('\xec\x98\xa4\xed\x9b\x84')!=-1:
                 Date = Date.replace(u'\uc624\ud6c4 ', '') + ' PM'
                 Date = pd.to_datetime(Date).strftime('%Y-%m-%d %H:%M:%S')
+            [s.extract() for s in article_soup('script')]
             [s.extract() for s in article_soup('a')]
+            [b.replace_with("%s " % b.text) for b in article_soup('br')]
             Contents = article_soup.select('#newsEndContents')[0].text.replace("\t", "").replace("\n",'')
+            Contents = ' '.join(Contents.split())
             Emotion = Get_Emotion(A_type, source_id, article_id)
             Author = Get_Author(Contents)
         # Default Article template
@@ -171,7 +180,9 @@ if __name__ == '__main__':
             Date = Date[:16] + ':00'
             [s.extract() for s in article_soup('script')]
             [s.extract() for s in article_soup('a')]
+            [b.replace_with("%s " % b.text) for b in article_soup('br')]
             Contents = article_soup.select('#articleBodyContents')[0].text.replace("\t", "").replace("\n",'')
+            Contents = ' '.join(Contents.split())
             Emotion = Get_Emotion(A_type, source_id, article_id)
             Author = Get_Author(Contents)
         else:
