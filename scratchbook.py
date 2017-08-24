@@ -22,9 +22,10 @@ source_id:
 source_id_list = ['005, '020', '021', '022', '023', '025', '028', '032', '081', '469']
 u'국민일보', u'동아일보', u'문화일보', u'세계일보', u'조선일보', u'중앙일보', u'한겨례', u'경향신문', u'서울신문', u'한국일보'
 year_end_target = [999999, 3080999, 2321499, 3193999, 3299499, 2737999, 2373031, 2804499, 2839999, 219944]
+np.array(year_end_target)+1
 year_start_target = [929000, 3000000, 2281500, 3090000, 3259000, 2639651, 2330000, 2714500, 2740000, 160000]
 delay_target = []
-np.sum(np.array(year_end_target) - np.array(year_start_target))/10
+np.array(year_end_target) - np.array(year_start_target)
 1/((np.array(year_end_target) - np.array(year_start_target)) / 60 / 60 / 27.4)
 prefix = ["0000", "000", "000", "000", "000", "000", "000", "000", "000", "0000"]
 Aug 21st 8AM (PST):
@@ -128,7 +129,50 @@ for i in range(10):
     articles.append(article_contents[0])
 for i in articles:
     print i
+################################################################################
+from collections import Counter
+import urllib
+import random
+import webbrowser
 
+from konlpy.tag import Hannanum
+from lxml import html
+import pytagcloud # requires Korean font support
+import sys
+
+if sys.version_info[0] >= 3:
+    urlopen = urllib.request.urlopen
+else:
+    urlopen = urllib.urlopen
+
+
+r = lambda: random.randint(0,255)
+color = lambda: (r(), r(), r())
+
+def get_bill_text(billnum):
+    url = 'http://pokr.kr/bill/%s/text' % billnum
+    response = urlopen(url).read().decode('utf-8')
+    page = html.fromstring(response)
+    text = page.xpath(".//div[@id='bill-sections']/pre/text()")[0]
+    return text
+
+def get_tags(text, ntags=50, multiplier=10):
+    h = Hannanum()
+    nouns = h.nouns(text)
+    count = Counter(nouns)
+    return [{ 'color': color(), 'tag': n, 'size': c*multiplier }\
+                for n, c in count.most_common(ntags)]
+
+def draw_cloud(tags, filename, fontname='Noto Sans CJK', size=(800, 600)):
+    pytagcloud.create_tag_image(tags, filename, fontname=fontname, size=size)
+    webbrowser.open(filename)
+
+
+bill_num = '1904882'
+text = get_bill_text(bill_num)
+tags = get_tags(text)
+print(tags)
+draw_cloud(tags, 'wordcloud.png')
 
 ################################################################################
 # Python 3.6

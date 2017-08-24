@@ -26,7 +26,7 @@ if __name__ == "__main__":
                 '서울신문':'▶  재미있는 세상[] ▶ [] []ⓒ 서울신문(), 무단전재 및 재배포금지',\
                 '한국일보':'▶한국일보  ▶[ⓒ 한국일보(), 무단 전재 및 재배포 금지]'}
 
-    df0 = pd.read_json('data/Data_005_1011000~1019559.json') # CUT
+    df0 = pd.read_json('data/Data_005_1011000~1019559.json') # CUT Author to 3 char
     df1 = pd.read_json('data/Data_020_3081000~3088691.json')
     df2 = pd.read_json('data/Data_021_2321500~2324813.json')
     df3 = pd.read_json('data/Data_022_3194000~3202400.json')
@@ -34,8 +34,9 @@ if __name__ == "__main__":
     df5 = pd.read_json('data/Data_025_2738000~2747105.json')
     df6 = pd.read_json('data/Data_028_2373032~2376732.json')
     df7 = pd.read_json('data/Data_032_2804500~2812318.json')
-    df8 = pd.read_json('data/Data_081_2840000~2847019.json') # CUT
-    df9 = pd.read_json('data/Data_469_219945~227943.json') # CUT
+    df8 = pd.read_json('data/Data_081_2840000~2847019.json') # CUT Author to 3 char
+    df9 = pd.read_json('data/Data_469_219945~227943.json') # CUT Author to 3 char
+    # df10 = pd.read_json('data/Data_1_month.json')
 
     df0 = cutName(df0)
     df8 = cutName(df8)

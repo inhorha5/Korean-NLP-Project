@@ -9,43 +9,50 @@ import json
 import re
 import sys
 
+# User must input target source when launching the script
+target = int(sys.argv[1]) # 0~9 to choose news source
+
 # WRITTEN IN PYTHON 2.7
 # 2017.08.22 Edward Rha
 # This code is written for personal educational use.
 # This code gathers Korean news articles from Naver news.
-# This code will shuffle the scraping order and put delays inbetween
+# This code will shuffle the scraping order and put random delays.
+#
 
-# User must input target source when launching the script
 
-# example target: http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=469&aid=0000227942
+# example url: http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=469&aid=0000227942
+
+# Scraping between Aug 21st 8AM (PST) and approximately September 21st (PST):
 # target variables
 source_id_list = ['005', '020', '021', '022', '023', '025', '028', '032', '081', '469']
 source_id_names = [u'\uAD6D\uBBFC\uC77C\uBCF4', u'\uB3D9\uC544\uC77C\uBCF4', u'\uBB38\uD654\uC77C\uBCF4',\
                     u'\uC138\uACC4\uC77C\uBCF4', u'\uC870\uC120\uC77C\uBCF4', u'\uC911\uC559\uC77C\uBCF4',\
                     u'\uD55C\uACA8\uB840', u'\uACBD\uD5A5\uC2E0\uBB38', u'\uC11C\uC6B8\uC2E0\uBB38', u'\uD55C\uAD6D\uC77C\uBCF4']
 source_target_prefix = ["000", "000", "000", "000", "000", "000", "000", "000", "000", "0000"]
-source_target_1year = [1011000, 3081000, 2321500, 3194000, 3299500, 2738000, 2373032, 2804500, 2840000, 219945] # Start articles
-source_target_end_1year = [1019559, 3088691, 2324813, 3202400, 3306675, 2747105, 2376732, 2812318, 2847019, 227943] # End articles
+source_article_id_start = [1011000, 3081000, 2321500, 3194000, 3299500, 2738000, 2373032, 2804500, 2840000, 219945] # Start articles
+source_article_id_end = [1019559, 3088691, 2324813, 3202400, 3306675, 2747105, 2376732, 2812318, 2847019, 227943] # End articles
 delay_list = [0.8, 0.65, 2.0, 0.45, 2.0, 0.5, 2.0, 0.55, 0.5,  1.1]
-# delay_list = [0.8, 0.65, 3.0, 0.45, 2.5, 0.5, 2.4, 0.55, 0.5,  1.1]
+# delay_list = [0.8, 0.65, 3.0, 0.45, 2.5, 0.5, 2.4, 0.55, 0.5, 1.1]
+# Set all values in delay_list to 0 to have no random delay
 
 
-target = int(sys.argv[1])
 source_id = source_id_list[target]
 source_name = source_id_names[target]
-# print(source_name)
 a_id_prefix = source_target_prefix[target]
-start_id_int = source_target_1year[target]
-end_id_int = source_target_end_1year[target]
+start_id_int = source_article_id_start[target]
+end_id_int = source_article_id_end[target]
 Delay = delay_list[target]
+
 
 error = 'error_msg 404'
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2225.0 Safari/537.36'}
+
 
 def Delayer(input_time):
     Delay = input_time / np.exp(input_time * random())
     # print Delay
     time.sleep(Delay)
+
 
 def Get_Author(Contents):
     gija = '\xea\xb8\xb0\xec\x9e\x90'
@@ -64,6 +71,7 @@ def Get_Author(Contents):
             Author = ""
     return Author
 
+
 # {u'angry', u'like', u'sad', u'want', u'warm', u'fan'}
 def Get_Emotion(A_type, source_id, article_id):
     Emotion_link = 'http://news.like.naver.com/v1/search/contents?&q=' + A_type + '%5Bne_' + source_id + '_' + article_id + '%5D'
@@ -73,6 +81,7 @@ def Get_Emotion(A_type, source_id, article_id):
     for item in Emotion_string:
         Emotion_dict[item['reactionType']] = item['count']
     return Emotion_dict
+
 
 if __name__ == '__main__':
     aid_list = range(start_id_int, end_id_int+1)

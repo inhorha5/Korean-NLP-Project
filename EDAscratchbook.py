@@ -5,7 +5,48 @@ import re
 import konlpy
 from konlpy.tag import Kkma
 from konlpy.utils import pprint
+import konlpy.tag as tag
+import nltk
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
+mecab = konlpy.tag.Mecab()
+df = pd.read_json('data/Data_1_month.json')
+
+
+# test = df.loc[12649]['Contents']
+
+df['Lemmatized'] = ""
+for i in range(df.shape[0]):
+    Content = df.loc[i]['Contents']
+    df.set_value(i, 'Lemmatized', ' '.join(mecab.nouns(Content)))
+    if i%2000 == 0:
+        print(i)
+temp = df['Lemmatized'].as_matrix()[60000:]
+
+temp = np.append(temp, '트럼프')
+
+tfidf = TfidfVectorizer(max_features = 1000, lowercase=False)
+
+temp2 = tfidf.fit_transform(temp)
+Similarity = (temp2*temp2.T).A
+Similarity[10591].argsort()[::-1][:10]
+
+df['Contents'].as_matrix()[64162]
+df['Contents'].as_matrix()[60000]
+
+df['EventCount'] = df['Contents'].str.len()
+df['EventCount'].max()
+test
+temp = tag.Kkma()
+temp.pos(test)
+tokens = temp.nouns(test)
+tokens
+ko = nltk.Text(tokens, name="실험용")
+
+ko.common_contexts('전')
+print(len(ko.tokens))
+print(len(set(ko.tokens)))
+ko.vocab()
 
 kkma = Kkma()
 df
@@ -14,23 +55,9 @@ Content
 kkma.nouns(Content)
 
 
-def cutName(df):
-    for i in range(df.shape[0]):
-        if len(df.loc[i]['Author']) > 3:
-            df.set_value(i, 'Author', df.loc[i]['Author'][-3:])
-    return df
 
-if __name__ == "__main__":
-    df0 = pd.read_json('data/Data_005_1011000~1019559.json') # CUT
-    df1 = pd.read_json('data/Data_020_3081000~3088691.json')
-    df2 = pd.read_json('data/Data_021_2321500~2324813.json')
-    df3 = pd.read_json('data/Data_022_3194000~3202400.json')
-    df4 = pd.read_json('data/Data_023_3299500~3306675.json')
-    df5 = pd.read_json('data/Data_025_2738000~2747105.json')
-    df6 = pd.read_json('data/Data_028_2373032~2376732.json')
-    df7 = pd.read_json('data/Data_032_2804500~2812318.json')
-    df8 = pd.read_json('data/Data_081_2840000~2847019.json') # CUT
-    df9 = pd.read_json('data/Data_469_219945~227943.json') # CUT
+
+
 
 from collections import Counter
 like = []
@@ -49,4 +76,4 @@ for i in range(df.shape[0]):
     more.append(Emotion_data['want'])
 np.array(angry).argsort()[::-1][3:]
 
-df.loc[3498]
+##########################
