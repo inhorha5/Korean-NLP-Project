@@ -5,7 +5,7 @@ import multiprocessing
 
 # WRITTEN IN PYTHON 3.6
 # To launch in Python 2.7, you must specify the encoding method for the file. Even then, no garuntees ¯\_(ツ)_/¯
-# 2017.08.23 Edward Rha
+# 2017.08.25 Edward Rha
 # This code is written for personal educational use.
 
 def cutName(df):
@@ -15,6 +15,16 @@ def cutName(df):
     return df
 
 if __name__ == "__main__":
+    source_dict = { '경향신문': '032',\
+                    '국민일보': '005',\
+                    '동아일보': '020',\
+                    '문화일보': '021',\
+                    '서울신문': '081',\
+                    '세계일보': '022',\
+                    '조선일보': '023',\
+                    '중앙일보': '025',\
+                    '한겨례': '028',\
+                    '한국일보': '469'}
     ReplaceDict = {'국민일보':'GoodNews paper ⓒ , 무단전재 및 재배포금지',\
                 '동아일보':'ⓒ 동아일보 & donga.com, 무단 전재 및 재배포 금지',\
                 '문화일보':"[  |  |  ][Copyrightⓒmunhwa.com '대한민국 오후를 여는 유일석간 문화일보' 무단 전재 및 재배포 금지()]",\
@@ -41,12 +51,18 @@ if __name__ == "__main__":
     df0 = cutName(df0)
     df8 = cutName(df8)
     df9 = cutName(df9)
-    df0.head(1)
+
     df_month = pd.concat([df0, df1, df2, df3, df4, df5, df6, df7, df8, df9], ignore_index=True)
+    df_month['A_id'] = df_month['A_id'].astype(str)
+    df_month.rename(columns={'A_id':'articleID', 'A_type':'Category', 'Source':'NewsOutlet', \
+                        'Title':'articleTitle', 'Date':'articleDate', 'Contents':'articleContents',\
+                        'Author':'articleAuthor'}, inplace=True)
+    # df_month.head(1)
 
     for i in range(df_month.shape[0]):
-        source = df_month.loc[i]['Source']
+        source = df_month.loc[i]['NewsOutlet']
         string = ReplaceDict[source]
-        df_month.set_value(i, 'Contents', df_month.loc[i]['Contents'].replace(string, ''))
+        df_month.set_value(i, 'articleContents', df_month.loc[i]['articleContents'].replace(string, ''))
+        df_month.set_value(i, 'articleID', (source_dict[df_month.loc[i]['NewsOutlet']]+'_'+df_month.loc[i]['articleID']))
 
-    df_month.to_json('data/Data_1_month.json')
+    df_month.to_json('data/Data_1_month.json', orient='records', date_format="iso")
