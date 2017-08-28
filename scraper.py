@@ -24,32 +24,8 @@ Delay = 0
 # fixed variables
 source_id_list = ['005', '020', '021', '022', '023', '025', '028', '032', '081', '469']
 source_id_names = ['국민일보', '동아일보', '문화일보', '세계일보', '조선일보', '중앙일보', '한겨례', '경향신문', '서울신문', '한국일보']
-source_target_prefix = ["000", "000", "000", "000", "000", "000", "000", "000", "000", "0000"]
-ReplaceDict = {'국민일보':'GoodNews paper ⓒ , 무단전재 및 재배포금지',\
-            '동아일보':'ⓒ 동아일보 & donga.com, 무단 전재 및 재배포 금지',\
-            '문화일보':"[  |  |  ][Copyrightⓒmunhwa.com '대한민국 오후를 여는 유일석간 문화일보' 무단 전재 및 재배포 금지()]",\
-            '세계일보':'ⓒ 세상을 보는 눈, 글로벌 미디어 세계일보',\
-            '조선일보':'[]- Copyrights ⓒ 조선일보 & chosun.com, 무단 전재 및 재배포 금지 -',\
-            '중앙일보':'▶SNS에서 만나는 중앙일보   ⓒ중앙일보 and JTBC Content Hub Co., Ltd. 무단 전재 및 재배포 금지',\
-            '한겨례':'▶ 한겨레 절친이 되어 주세요!   [ⓒ한겨레신문 : 무단전재 및 재배포 금지]',\
-            '경향신문':'▶ 경향신문 SNS   ▶ ©경향신문(), 무단전재 및 재배포 금지',\
-            '서울신문':'▶  재미있는 세상[] ▶ [] []ⓒ 서울신문(), 무단전재 및 재배포금지',\
-            '한국일보':'▶한국일보  ▶[ⓒ 한국일보(), 무단 전재 및 재배포 금지]'}
 error = 'error_msg 404'
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2225.0 Safari/537.36'}
-#
-# source_article_id_start = [1011000, 3081000, 2321500, 3194000, 3299500, 2738000, 2373032, 2804500, 2840000, 219945] # Start articles
-# source_article_id_end = [1019559, 3088691, 2324813, 3202400, 3306675, 2747105, 2376732, 2812318, 2847019, 227943] # End articles
-# source_id = source_id_list[target]
-# source_name = source_id_names[target]
-# a_id_prefix = source_target_prefix[target]
-# start_id_int = source_article_id_start[target]
-# end_id_int = source_article_id_end[target]
-
-
-
-
-# Fixed strings
 
 def Delayer(input_time):
     """
@@ -299,13 +275,3 @@ def Update():
         location = df_all.loc[i]['articleContents'].find(string)
         df_all.set_value(i, 'articleContents', df_all.loc[i]['articleContents'][:location])
     return df_all
-
-
-# if __name__ == '__main__':
-#     df = Update()
-
-
-    # Write the collected data to json
-    # df.to_json(json_path)
-
-    # df_month.to_json('data/Data_1_month.json', orient='records', date_format="iso")
