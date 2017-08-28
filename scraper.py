@@ -8,72 +8,103 @@ import csv
 import json
 import re
 import sys
+from multiprocessing import Pool, cpu_count
 
-# User must input target source when launching the script
-target = int(sys.argv[1]) # 0~9 to choose news source
-
-# WRITTEN IN PYTHON 2.7
-# 2017.08.22 Edward Rha
+# WRITTEN IN PYTHON 3.6
+# 2017.08.28 Edward Rha
 # This code is written for personal educational use.
 # This code gathers Korean news articles from Naver news.
 # This code will shuffle the scraping order and put random delays.
-#
 
+# Set max random delay between scraping
+Delay = 0
 
-# example url: http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=469&aid=0000227942
+# example Naver news url: http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=469&aid=0000227942
 
-# Scraping between Aug 21st 8AM (PST) and approximately September 21st (PST):
-# target variables
+# fixed variables
 source_id_list = ['005', '020', '021', '022', '023', '025', '028', '032', '081', '469']
-source_id_names = [u'\uAD6D\uBBFC\uC77C\uBCF4', u'\uB3D9\uC544\uC77C\uBCF4', u'\uBB38\uD654\uC77C\uBCF4',\
-                    u'\uC138\uACC4\uC77C\uBCF4', u'\uC870\uC120\uC77C\uBCF4', u'\uC911\uC559\uC77C\uBCF4',\
-                    u'\uD55C\uACA8\uB840', u'\uACBD\uD5A5\uC2E0\uBB38', u'\uC11C\uC6B8\uC2E0\uBB38', u'\uD55C\uAD6D\uC77C\uBCF4']
+source_id_names = ['국민일보', '동아일보', '문화일보', '세계일보', '조선일보', '중앙일보', '한겨례', '경향신문', '서울신문', '한국일보']
 source_target_prefix = ["000", "000", "000", "000", "000", "000", "000", "000", "000", "0000"]
-source_article_id_start = [1011000, 3081000, 2321500, 3194000, 3299500, 2738000, 2373032, 2804500, 2840000, 219945] # Start articles
-source_article_id_end = [1019559, 3088691, 2324813, 3202400, 3306675, 2747105, 2376732, 2812318, 2847019, 227943] # End articles
-delay_list = [0.8, 0.65, 2.0, 0.45, 2.0, 0.5, 2.0, 0.55, 0.5,  1.1]
-# delay_list = [0.8, 0.65, 3.0, 0.45, 2.5, 0.5, 2.4, 0.55, 0.5, 1.1]
-# Set all values in delay_list to 0 to have no random delay
-
-
-source_id = source_id_list[target]
-source_name = source_id_names[target]
-a_id_prefix = source_target_prefix[target]
-start_id_int = source_article_id_start[target]
-end_id_int = source_article_id_end[target]
-Delay = delay_list[target]
-
-
+ReplaceDict = {'국민일보':'GoodNews paper ⓒ , 무단전재 및 재배포금지',\
+            '동아일보':'ⓒ 동아일보 & donga.com, 무단 전재 및 재배포 금지',\
+            '문화일보':"[  |  |  ][Copyrightⓒmunhwa.com '대한민국 오후를 여는 유일석간 문화일보' 무단 전재 및 재배포 금지()]",\
+            '세계일보':'ⓒ 세상을 보는 눈, 글로벌 미디어 세계일보',\
+            '조선일보':'[]- Copyrights ⓒ 조선일보 & chosun.com, 무단 전재 및 재배포 금지 -',\
+            '중앙일보':'▶SNS에서 만나는 중앙일보   ⓒ중앙일보 and JTBC Content Hub Co., Ltd. 무단 전재 및 재배포 금지',\
+            '한겨례':'▶ 한겨레 절친이 되어 주세요!   [ⓒ한겨레신문 : 무단전재 및 재배포 금지]',\
+            '경향신문':'▶ 경향신문 SNS   ▶ ©경향신문(), 무단전재 및 재배포 금지',\
+            '서울신문':'▶  재미있는 세상[] ▶ [] []ⓒ 서울신문(), 무단전재 및 재배포금지',\
+            '한국일보':'▶한국일보  ▶[ⓒ 한국일보(), 무단 전재 및 재배포 금지]'}
 error = 'error_msg 404'
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2225.0 Safari/537.36'}
+#
+# source_article_id_start = [1011000, 3081000, 2321500, 3194000, 3299500, 2738000, 2373032, 2804500, 2840000, 219945] # Start articles
+# source_article_id_end = [1019559, 3088691, 2324813, 3202400, 3306675, 2747105, 2376732, 2812318, 2847019, 227943] # End articles
+# source_id = source_id_list[target]
+# source_name = source_id_names[target]
+# a_id_prefix = source_target_prefix[target]
+# start_id_int = source_article_id_start[target]
+# end_id_int = source_article_id_end[target]
 
+
+
+
+# Fixed strings
 
 def Delayer(input_time):
+    """
+    Delayer
+    """
     Delay = input_time / np.exp(input_time * random())
     # print Delay
     time.sleep(Delay)
 
-
 def Get_Author(Contents):
-    gija = '\xea\xb8\xb0\xec\x9e\x90'
+    """
+        Input: Article contents.
+        Returns: Possible Author name, empty string if it doesn't detect.
+
+    Given the article text, this function tries its best extract the author name which isn't always stated.
+    Note: Prone to error. It works decently well when author name is properly stated at the end but not always reliable.
+    """
+    gija = '기자'
     Author = ""
-    index = Contents.encode('utf-8').rfind(gija)
-    if (index == -1) or ((index) < (len(Contents.encode('utf-8'))-200)):
+    index = Contents.rfind(gija)
+    if (index == -1) or ((index) < (len(Contents)*2/3)):
         return Author
     else:
-        regex = r'.*\.+.*?\s*?\w*?\s*?(' + '[\xea\xb0\x80-\xed\x9e\xa3]' + r'+)\s*\w*' + gija
-        p = re.compile(unicode(regex,'utf-8'), re.UNICODE)
-        if len(Contents) < 500:
-            Contents = '.' + Contents[len(Contents)-150:]
+        regex = r'.*\.+.*?\s*?\w*?\s*?(' + '[가-힣]' + r'+)\s*\w*' + gija
+        p = re.compile(regex, re.UNICODE)
+        if len(Contents) > 300:
+            Contents = '.' + Contents[len(Contents)-300:]
         try:
             Author = p.match(Contents).group(1)
         except AttributeError:
             Author = ""
     return Author
 
+def cutAuthor(df):
+    """
+        Input: Pandas DataFrame
+        Output: Pandas DataFrame
 
-# {u'angry', u'like', u'sad', u'want', u'warm', u'fan'}
+    Cuts author's name to the last 3 characters. (Since Korean names almost never go over 3 characters)
+    Only use for specific news outlets that benefits from this cut.
+    """
+    for i in range(df.shape[0]):
+        if len(df.loc[i]['articleAuthor']) > 3:
+            df.set_value(i, 'articleAuthor', df.loc[i]['articleAuthor'][-3:])
+    return df
+
 def Get_Emotion(A_type, source_id, article_id):
+    """
+        Input: Article type (NEWS, SPORTS, ENTERTAIN), source id (ex. '005'), article_id (ex. '0001013323')
+        Output: dictionary containing the emotion data.
+
+    Queries the site for the emotion data.
+    ex: {'angry':5, 'like':1}
+    emotion types: {u'angry', u'like', u'sad', u'want', u'warm', u'fan'}
+    """
     Emotion_link = 'http://news.like.naver.com/v1/search/contents?&q=' + A_type + '%5Bne_' + source_id + '_' + article_id + '%5D'
     Emotion_string = requests.get(Emotion_link, headers=headers)
     Emotion_string = json.loads(Emotion_string.content)['contents'][0]['reactions']
@@ -82,30 +113,61 @@ def Get_Emotion(A_type, source_id, article_id):
         Emotion_dict[item['reactionType']] = item['count']
     return Emotion_dict
 
+def Get_LatestArticle_ids():
+    """
+        Output: list of strings
 
-if __name__ == '__main__':
-    aid_list = range(start_id_int, end_id_int+1)
+    Returns the ids for the most recent articles for each of the
+    ex: ['0003130302', '00003023044', ...]
+    """
+    Output = []
+    for source in source_id_list:
+        link = "http://news.naver.com/main/list.nhn?mode=LPOD&mid=sec&oid=" + source
+        r = requests.get(link, headers=headers)
+        article_soup = BeautifulSoup(r.content, 'html.parser')
+        article_id = article_soup.select('.type06_headline a[href]')[0]
+        Output.append(article_id.attrs['href'][-10:])
+    return Output
+
+def Get_LastUpdatedArticle_ids():
+    """
+        Output: list of strings
+
+    Returns the last updated article ids from 'logs/last_update.csv'
+    """
+    Output = []
+    with open("logs/last_update.csv", "r") as text_file:
+        reader = csv.reader(text_file)
+        for row in reader:
+            Output.append(row)
+    return Output[0]
+
+def Update_LastUpdatedArticle_ids(ID_List):
+    """
+        Input: list of strings
+    ex: ['0003130302', '0003023044', ...]
+    Updates the last updated article ids to 'logs/last_update.csv'
+    """
+    with open("logs/last_update.csv", "w") as text_file:
+        writer = csv.writer(text_file,  lineterminator='\n')
+        writer.writerow(ID_List)
+
+def Update_new_articles_to_data(source_index_number):
+    starting_position = Get_LastUpdatedArticle_ids()[source_index_number]
+    end_position = Get_LatestArticle_ids()[source_index_number]
+    aid_list = list(range(int(starting_position), int(end_position)))
     shuffle(aid_list)
     progress_tracker = 0
-    errorcount = 0
     errorlist = []
-    exceptioncount = 0
     exceptionlist = []
-    df = pd.DataFrame(columns=['Source', 'Title', 'Date', 'Author', 'Contents', 'A_id', 'A_type', 'Emotion'])
-
-    # WRITING PATHS
-    middle = source_id + '_' + str(start_id_int) + '~' + str(end_id_int)
-    json_path = 'data/Data_' + middle + '.json'
-    error_path = 'logs/error_log_' + middle + '.csv'
-    exception_path = 'logs/exception_log_' + middle + '.csv'
-
-    # Save the shuffled article id list for debugging
-    list_path = 'data/Data_list_' + middle + '.csv'
-    with open(list_path, "wa") as text_file:
-        writer = csv.writer(text_file)
-        writer.writerow(aid_list)
+    df = pd.DataFrame(columns=['NewsOutlet', 'articleTitle', 'articleDate', 'articleAuthor', 'articleContents', 'articleID', 'Category', 'Emotion', 'Emotion_date'])
+    df['Emotion_date'] = df['Emotion_date'].astype('datetime64[ns]')
+    df['articleDate'] = df['articleDate'].astype('datetime64[ns]')
 
     for i in aid_list:
+        i = str(i)
+        while len(i) < 10:
+            i = '0' + i
         # information to retrieve
         title = ''
         Date = ''
@@ -115,23 +177,21 @@ if __name__ == '__main__':
         Emotion = {}
 
         # Call article source
-        article_id = a_id_prefix + str(i)
-        link = 'http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=' + source_id + '&aid=' + article_id
+        article_id = i
+        link = 'http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=' + source_id_list[source_index_number] + '&aid=' + article_id
         r = requests.get(link, headers=headers)
 
-        # Check which charset
+        # Check which charset. For future use.
         decode_type = "utf-8"
-        if r.content.lower().find('charset="utf-8"') == -1:
+        if r.text.lower().find('charset="utf-8"') == -1:
             decode_type = "cp949"
 
         # Removed Articles
-        if r.content.find(error) != -1:
-            errorcount+=1
-            errorlist.append(i)
-            # print '404 error ', progress_tracker, i
+        if r.text.find(error) != -1:
+            # errorlist.append(i)
             continue
         # Articles with ENTERTAIN template
-        elif r.content.find('data-sid="ENTERTAIN"') != -1:
+        elif r.text.find('data-sid="ENTERTAIN"') != -1:
             A_type = 'ENTERTAIN'
             article_soup = BeautifulSoup(r.content, 'html.parser')
             title = article_soup.select('.end_tit')[0].text.replace("\t", "").replace("\n",'')
@@ -141,20 +201,20 @@ if __name__ == '__main__':
                     Date = Date[i:]
                     break;
             Date = Date.replace(".", "-")
-            if Date.encode('utf-8').find('\xec\x98\xa4\xec\xa0\x84')!=-1:
-                Date = Date.replace(u'\uc624\uc804 ','')
-            elif Date.encode('utf-8').find('\xec\x98\xa4\xed\x9b\x84')!=-1:
-                Date = Date.replace(u'\uc624\ud6c4 ', '') + ' PM'
+            if Date.find('오전')!=-1:
+                Date = Date.replace('오전 ','')
+            elif Date.find('오후')!=-1:
+                Date = Date.replace('오후 ', '') + ' PM'
                 Date = pd.to_datetime(Date).strftime('%Y-%m-%d %H:%M:%S')
             [s.extract() for s in article_soup('script')]
             [s.extract() for s in article_soup('a')]
             [b.replace_with("%s " % b.text) for b in article_soup('br')]
-            Contents = article_soup.select('#articeBody')[0].text.replace("\t", "").replace("\n",'')
+            Contents = article_soup.select('#articeBody')[0].text.replace("\t", "").replace("\n",' ')
             Contents = ' '.join(Contents.split())
             Author = Get_Author(Contents)
-            Emotion = Get_Emotion(A_type, source_id, article_id)
+            Emotion = Get_Emotion(A_type, source_id_list[source_index_number], article_id)
         # Articles with SPORTS template
-        elif r.content.find('data-sid="SPORTS"') != -1:
+        elif r.text.find('data-sid="SPORTS"') != -1:
             A_type = 'SPORTS'
             article_soup = BeautifulSoup(r.content, 'html.parser')
             title = article_soup.select('title')[0].text.replace("\t", "").replace("\n",'')
@@ -164,20 +224,20 @@ if __name__ == '__main__':
                     Date = Date[i:]
                     break;
             Date = Date.replace(".", "-")
-            if Date.encode('utf-8').find('\xec\x98\xa4\xec\xa0\x84')!=-1:
-                Date = Date.replace(u'\uc624\uc804 ','')
-            elif Date.encode('utf-8').find('\xec\x98\xa4\xed\x9b\x84')!=-1:
-                Date = Date.replace(u'\uc624\ud6c4 ', '') + ' PM'
+            if Date.find('오전')!=-1:
+                Date = Date.replace('오전 ','')
+            elif Date.find('오후')!=-1:
+                Date = Date.replace('오후 ', '') + ' PM'
                 Date = pd.to_datetime(Date).strftime('%Y-%m-%d %H:%M:%S')
             [s.extract() for s in article_soup('script')]
             [s.extract() for s in article_soup('a')]
             [b.replace_with("%s " % b.text) for b in article_soup('br')]
-            Contents = article_soup.select('#newsEndContents')[0].text.replace("\t", "").replace("\n",'')
+            Contents = article_soup.select('#newsEndContents')[0].text.replace("\t", "").replace("\n",' ')
             Contents = ' '.join(Contents.split())
-            Emotion = Get_Emotion(A_type, source_id, article_id)
+            Emotion = Get_Emotion(A_type, source_id_list[source_index_number], article_id)
             Author = Get_Author(Contents)
         # Default Article template
-        elif r.content.find('data-sid="NEWS"') != -1:
+        elif r.text.find('data-sid="NEWS"') != -1:
             A_type = 'NEWS'
             article_soup = BeautifulSoup(r.content, 'html.parser')
             title = article_soup.select('#articleTitle')[0].text.replace("\t", "").replace("\n",'')
@@ -190,36 +250,62 @@ if __name__ == '__main__':
             [s.extract() for s in article_soup('script')]
             [s.extract() for s in article_soup('a')]
             [b.replace_with("%s " % b.text) for b in article_soup('br')]
-            Contents = article_soup.select('#articleBodyContents')[0].text.replace("\t", "").replace("\n",'')
+            Contents = article_soup.select('#articleBodyContents')[0].text.replace("\t", "").replace("\n",' ')
             Contents = ' '.join(Contents.split())
-            Emotion = Get_Emotion(A_type, source_id, article_id)
+            Emotion = Get_Emotion(A_type, source_id_list[source_index_number], article_id)
             Author = Get_Author(Contents)
         else:
-            exceptioncount+=1
-            exceptionlist.append(i)
-            # print 'Exception error ', progress_tracker, i
+            # exceptionlist.append(i)
             continue
 
-        df.loc[df.shape[0]] = [source_name, title, Date, Author, Contents, article_id, A_type, Emotion]
-        df
+        article_id = source_id_list[source_index_number] + '_' + article_id
+        df.loc[df.shape[0]] = [source_id_names[source_index_number], title, Date, Author, Contents, article_id, A_type, Emotion, pd.to_datetime('today')]
         progress_tracker+=1
-        # print(progress_tracker)
         Delayer(Delay)
-    df['Date'] = pd.to_datetime(df['Date'])
+    df['articleDate'] = pd.to_datetime(df['articleDate'])
+    df['Emotion_date'] = pd.to_datetime(df['Emotion_date'])
+    return df
+
+def Update():
+    """
+        Output: Pandas DataFrame
+
+    Returns the new articles since last update.
+    """
+    df_list = []
+    p = Pool(4)
+    df_list = p.map(Update_new_articles_to_data, list(range(len(source_id_list))))
+
+    # for i in range(len(source_id_list)):
+    #     df_list.append(Update_new_articles_to_data(i))
+    df_list[0] = cutAuthor(df_list[0])
+    df_list[8] = cutAuthor(df_list[8])
+    df_list[9] = cutAuthor(df_list[9])
+
+    df_all = pd.concat(df_list, ignore_index=True)
+    ReplaceDict = {'국민일보':'GoodNews paper ⓒ',\
+                '동아일보':'ⓒ 동아일보',\
+                '문화일보':"[ | | ] [Copyrightⓒmunhwa.com",\
+                '세계일보':'ⓒ 세상을 보는 눈',\
+                '조선일보':'[] - Copyrights ⓒ',\
+                '중앙일보':'▶SNS에서 만나는 중앙일보',\
+                '한겨례':'▶ 한겨레',\
+                '경향신문':'▶ 경향신문',\
+                '서울신문':'▶ 재미있는',\
+                '한국일보':'▶한국일보'}
+    for i in range(df_all.shape[0]):
+        source = df_all.loc[i]['NewsOutlet']
+        string = ReplaceDict[source]
+        location = df_all.loc[i]['articleContents'].find(string)
+        df_all.set_value(i, 'articleContents', df_all.loc[i]['articleContents'][:location])
+    return df_all
+
+
+# if __name__ == '__main__':
+#     df = Update()
 
 
     # Write the collected data to json
-    df.to_json(json_path)
-    # Write 404 list to csv
-    if len(errorlist) != 0:
-        with open(error_path, "wa") as text_file:
-            writer = csv.writer(text_file)
-            writer.writerow(errorlist)
+    # df.to_json(json_path)
 
-    # Write exceptions to csv
-    if len(exceptionlist) != 0:
-        with open(exception_path, "wa") as text_file:
-            writer = csv.writer(text_file)
-            writer.writerow(exceptionlist)
-            article_id
-    print('DONE')
+    # df_month.to_json('data/Data_1_month.json', orient='records', date_format="iso")
