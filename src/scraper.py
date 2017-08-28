@@ -27,6 +27,8 @@ source_id_names = ['국민일보', '동아일보', '문화일보', '세계일보
 error = 'error_msg 404'
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2225.0 Safari/537.36'}
 
+
+
 def Delayer(input_time):
     """
     Delayer
@@ -34,6 +36,7 @@ def Delayer(input_time):
     Delay = input_time / np.exp(input_time * random())
     # print Delay
     time.sleep(Delay)
+
 
 def Get_Author(Contents):
     """
@@ -59,6 +62,7 @@ def Get_Author(Contents):
             Author = ""
     return Author
 
+
 def cutAuthor(df):
     """
         Input: Pandas DataFrame
@@ -71,6 +75,7 @@ def cutAuthor(df):
         if len(df.loc[i]['articleAuthor']) > 3:
             df.set_value(i, 'articleAuthor', df.loc[i]['articleAuthor'][-3:])
     return df
+
 
 def Get_Emotion(A_type, source_id, article_id):
     """
@@ -89,6 +94,7 @@ def Get_Emotion(A_type, source_id, article_id):
         Emotion_dict[item['reactionType']] = item['count']
     return Emotion_dict
 
+
 def Get_LatestArticle_ids():
     """
         Output: list of strings
@@ -105,6 +111,7 @@ def Get_LatestArticle_ids():
         Output.append(article_id.attrs['href'][-10:])
     return Output
 
+
 def Get_LastUpdatedArticle_ids():
     """
         Output: list of strings
@@ -112,11 +119,12 @@ def Get_LastUpdatedArticle_ids():
     Returns the last updated article ids from 'logs/last_update.csv'
     """
     Output = []
-    with open("logs/last_update.csv", "r") as text_file:
+    with open("../logs/last_update.csv", "r") as text_file:
         reader = csv.reader(text_file)
         for row in reader:
             Output.append(row)
     return Output[0]
+
 
 def Update_LastUpdatedArticle_ids(ID_List):
     """
@@ -124,11 +132,18 @@ def Update_LastUpdatedArticle_ids(ID_List):
     ex: ['0003130302', '0003023044', ...]
     Updates the last updated article ids to 'logs/last_update.csv'
     """
-    with open("logs/last_update.csv", "w") as text_file:
+    with open("../logs/last_update.csv", "w") as text_file:
         writer = csv.writer(text_file,  lineterminator='\n')
         writer.writerow(ID_List)
 
+
 def Update_new_articles_to_data(source_index_number):
+    """
+        Input: Source number
+        Output: Pandas DataFrame
+
+    Scrapes new articles for the chosen source number and creates a DataFrame
+    """
     starting_position = Get_LastUpdatedArticle_ids()[source_index_number]
     end_position = Get_LatestArticle_ids()[source_index_number]
     aid_list = list(range(int(starting_position), int(end_position)))
@@ -144,6 +159,7 @@ def Update_new_articles_to_data(source_index_number):
         i = str(i)
         while len(i) < 10:
             i = '0' + i
+
         # information to retrieve
         title = ''
         Date = ''
@@ -242,6 +258,7 @@ def Update_new_articles_to_data(source_index_number):
     df['Emotion_date'] = pd.to_datetime(df['Emotion_date'])
     return df
 
+
 def Update():
     """
         Output: Pandas DataFrame
@@ -257,7 +274,6 @@ def Update():
     df_list[0] = cutAuthor(df_list[0])
     df_list[8] = cutAuthor(df_list[8])
     df_list[9] = cutAuthor(df_list[9])
-
     df_all = pd.concat(df_list, ignore_index=True)
     ReplaceDict = {'국민일보':'GoodNews paper ⓒ',\
                 '동아일보':'ⓒ 동아일보',\

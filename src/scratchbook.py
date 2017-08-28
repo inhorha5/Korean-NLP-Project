@@ -16,11 +16,17 @@ with open("Output.txt", "wa") as text_file:
 df_temp = pd.read_json('data/Data_032_2804500~2812318.json')
 df_temp['Author'][98]
 ".*[가-힣]+.*" # for cleaning up data later through Pandas
+
 """
 source_id:
 '005, '020', '021', '022', '023', '025', '028', '032', '081', '469'
-source_id_list = ['005, '020', '021', '022', '023', '025', '028', '032', '081', '469']
-u'국민일보', u'동아일보', u'문화일보', u'세계일보', u'조선일보', u'중앙일보', u'한겨례', u'경향신문', u'서울신문', u'한국일보'
+source_id_list = ['005', '020', '021', '022', '023', '025', '028', '032', '081', '469']
+name_list = [u'국민일보', u'동아일보', u'문화일보', u'세계일보', u'조선일보', u'중앙일보', u'한겨례', u'경향신문', u'서울신문', u'한국일보']
+dictionary = {}
+for i in range(10):
+    dictionary[name_list[i]] = source_id_list[i]
+dictionary
+
 year_end_target = [999999, 3080999, 2321499, 3193999, 3299499, 2737999, 2373031, 2804499, 2839999, 219944]
 np.array(year_end_target)+1
 year_start_target = [929000, 3000000, 2281500, 3090000, 3259000, 2639651, 2330000, 2714500, 2740000, 160000]
@@ -59,7 +65,7 @@ Aug 21st 8AM (PST):
 10 한국일보 http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=469&aid=0000227943
 ~0000219945 1 month IP 1
 ~0000160000 1 year
-#
+#['0001019559', '0003088691', '0002324813', '0003202400', '0003306675', '0002747105', '0002376732', '0002812318', '0002847019', '0000227943']
 
 News source | Title | Date | Author | Contents | Article_id | Article_type (normal, entertainment, sports) | Emotion (dict) | comment count
 
@@ -77,10 +83,10 @@ News source | Title | Date | Author | Contents | Article_id | Article_type (norm
 # http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=023&aid=0003219500 404
 #pd.to_numeric(df['A_id'])
 
-link = 'http://news.like.naver.com/v1/search/contents?&q=SPORTS%5Bne_032_0002811525%5D'
+link = 'http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=022&aid=0003147177'
 r = requests.get(link)
 likesoup = BeautifulSoup(r.content, 'html.parser')
-print likesoup.text
+print(likesoup.text)
 
 articles = []
 for i in range(10):
@@ -105,7 +111,7 @@ for i in range(10):
     link = 'http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=023&aid=0003219500'
     link = 'http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=469&aid=0000227942'
     link = 'http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=032&aid=0002811525'
-    link = 'http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=005&aid=0001013326'
+    link = 'http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=005&aid=0001019558'
     r = requests.get(link)
     article_soup = BeautifulSoup(r.content, 'html.parser')
     [s.extract() for s in article_soup('a')]
@@ -166,6 +172,16 @@ def get_tags(text, ntags=50, multiplier=10):
 def draw_cloud(tags, filename, fontname='Noto Sans CJK', size=(800, 600)):
     pytagcloud.create_tag_image(tags, filename, fontname=fontname, size=size)
     webbrowser.open(filename)
+
+
+list(range(0,df.shape[0],int(df.shape[0]/5)))
+df.shape
+size = int(df.shape[0]/5)
+df0 = df.loc[0:size]
+df1 = df.loc[size:size*2]
+df2 = df.loc[size*2:size*3]
+df3 = df.loc[size*3:size*4]
+df4 = df.loc[size*4:]
 
 
 bill_num = '1904882'

@@ -12,12 +12,18 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 mecab = konlpy.tag.Mecab()
 df = pd.read_json('data/Data_1_month.json')
 
+import json, requests
+from pandas.io.json import json_normalize
+
+r = requests.get('http://rank.search.naver.com/rank.js')
+json_normalize(json.loads(r.text), ['data', 'data'])
+json.loads(r.text)['ts']
 
 # test = df.loc[12649]['Contents']
 
 df['Lemmatized'] = ""
 for i in range(df.shape[0]):
-    Content = df.loc[i]['Contents']
+    Content = df.loc[i]['articleContents']
     df.set_value(i, 'Lemmatized', ' '.join(mecab.nouns(Content)))
     if i%2000 == 0:
         print(i)
