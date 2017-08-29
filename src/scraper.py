@@ -26,7 +26,7 @@ source_id_list = ['005', '020', '021', '022', '023', '025', '028', '032', '081',
 source_id_names = ['국민일보', '동아일보', '문화일보', '세계일보', '조선일보', '중앙일보', '한겨례', '경향신문', '서울신문', '한국일보']
 error = 'error_msg 404'
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2225.0 Safari/537.36'}
-
+Latest_update = ['','','','','','','','','','']
 
 
 def Delayer(input_time):
@@ -146,6 +146,7 @@ def Update_new_articles_to_data(source_index_number):
     """
     starting_position = Get_LastUpdatedArticle_ids()[source_index_number]
     end_position = Get_LatestArticle_ids()[source_index_number]
+    Latest_update[source_index_number] = end_position
     aid_list = list(range(int(starting_position), int(end_position)))
     shuffle(aid_list)
     progress_tracker = 0
@@ -268,6 +269,7 @@ def Update():
     df_list = []
     p = Pool(4)
     df_list = p.map(Update_new_articles_to_data, list(range(len(source_id_list))))
+    Update_LastUpdatedArticle_ids(Latest_update)
 
     # for i in range(len(source_id_list)):
     #     df_list.append(Update_new_articles_to_data(i))
