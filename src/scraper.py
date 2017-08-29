@@ -16,8 +16,8 @@ from multiprocessing import Pool, cpu_count
 # This code gathers Korean news articles from Naver news.
 # This code will shuffle the scraping order and put random delays.
 
-# Set max random delay between scraping
-Delay = 0
+# Set max random delay between scraping for each source
+Delay = 1
 
 # example Naver news url: http://news.naver.com/main/read.nhn?mode=LPOD&mid=sec&oid=469&aid=0000227942
 
@@ -26,7 +26,6 @@ source_id_list = ['005', '020', '021', '022', '023', '025', '028', '032', '081',
 source_id_names = ['국민일보', '동아일보', '문화일보', '세계일보', '조선일보', '중앙일보', '한겨례', '경향신문', '서울신문', '한국일보']
 error = 'error_msg 404'
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2225.0 Safari/537.36'}
-Latest_update = ['','','','','','','','','','']
 
 
 def Delayer(input_time):
@@ -95,21 +94,35 @@ def Get_Emotion(A_type, source_id, article_id):
     return Emotion_dict
 
 
-def Get_LatestArticle_ids():
+def Update_LatestArticle_ids():
     """
-        Output: list of strings
-
-    Returns the ids for the most recent articles for each of the
-    ex: ['0003130302', '00003023044', ...]
+    Updates the latest article ids from each source to 'logs/latest_ids.csv'
     """
-    Output = []
+    ID_List = []
     for source in source_id_list:
         link = "http://news.naver.com/main/list.nhn?mode=LPOD&mid=sec&oid=" + source
         r = requests.get(link, headers=headers)
         article_soup = BeautifulSoup(r.content, 'html.parser')
         article_id = article_soup.select('.type06_headline a[href]')[0]
-        Output.append(article_id.attrs['href'][-10:])
-    return Output
+        ID_List.append(article_id.attrs['href'][-10:])
+
+    with open("../logs/latest_ids.csv", "w") as text_file:
+        writer = csv.writer(text_file,  lineterminator='\n')
+        writer.writerow(ID_List)
+
+def Get_LatestArticle_ids():
+    """
+        Output: list of strings
+
+    Returns the ids for the most recent articles from "../logs/latest_ids.csv"
+    ex: ['0003130302', '00003023044', ...]
+    """
+    Output = []
+    with open("../logs/latest_ids.csv", "r") as text_file:
+        reader = csv.reader(text_file)
+        for row in reader:
+            Output.append(row)
+    return Output[0]
 
 
 def Get_LastUpdatedArticle_ids():
@@ -132,6 +145,10 @@ def Update_LastUpdatedArticle_ids(ID_List):
     ex: ['0003130302', '0003023044', ...]
     Updates the last updated article ids to 'logs/last_update.csv'
     """
+    Old_Article_ids = Get_LastUpdatedArticle_ids()
+    with open("../logs/last_last_update.csv", "w") as text_file:
+        writer = csv.writer(text_file,  lineterminator='\n')
+        writer.writerow(ID_List)
     with open("../logs/last_update.csv", "w") as text_file:
         writer = csv.writer(text_file,  lineterminator='\n')
         writer.writerow(ID_List)
@@ -146,7 +163,6 @@ def Update_new_articles_to_data(source_index_number):
     """
     starting_position = Get_LastUpdatedArticle_ids()[source_index_number]
     end_position = Get_LatestArticle_ids()[source_index_number]
-    Latest_update[source_index_number] = end_position
     aid_list = list(range(int(starting_position), int(end_position)))
     shuffle(aid_list)
     progress_tracker = 0
@@ -267,9 +283,9 @@ def Update():
     Returns the new articles since last update.
     """
     df_list = []
-    p = Pool(4)
+    p = Pool(10)
+    Article_ids = Get_LatestArticle_ids()
     df_list = p.map(Update_new_articles_to_data, list(range(len(source_id_list))))
-    Update_LastUpdatedArticle_ids(Latest_update)
 
     # for i in range(len(source_id_list)):
     #     df_list.append(Update_new_articles_to_data(i))
