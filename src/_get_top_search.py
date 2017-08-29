@@ -21,7 +21,7 @@ if __name__=="__main__":
         search_terms = likesoup.select('#naver a.rtk_link')
         daily_list = [s]
         for item in search_terms[:20]:
-            daily_list.append(item.text)
+        daily_list.append(item.text)
         top_search_list.append(daily_list)
 
         d = datetime.datetime.strptime(s, '%Y%m%d') + datetime.timedelta(days=-1)
