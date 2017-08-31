@@ -41,11 +41,11 @@ class LabeledLineSentence(object):
 
 
 if __name__ == "__main__":
-    data_path = '../data/Data_1_year.json'
-
-    df1 = pd.read_json('1.json', orient='records', dtype={"articleID":'object', "articleDate":"datetime64[ns]"})
-    df2 = pd.read_json('2.json', orient='records', dtype={"articleID":'object', "articleDate":"datetime64[ns]"})
-    df = pd.concat([df1,df2],ignore_index=True)
+    data_path = '../data/Data_1_month.json'
+    df = pd.read_json(data_path,orient='records', dtype={"articleID":'object', "articleDate":"datetime64[ns]"})
+    # df1 = pd.read_json('1.json', orient='records', dtype={"articleID":'object', "articleDate":"datetime64[ns]"})
+    # df2 = pd.read_json('2.json', orient='records', dtype={"articleID":'object', "articleDate":"datetime64[ns]"})
+    # df = pd.concat([df1,df2],ignore_index=True)
 
     list_label = list(df['articleID'])
     # list_articleContents = df['articleContents'].str.replace('["#%\'()*+,/:;<=>@\[\]^_`{|}~’”“′‘\\\.!?『』 ]+', ' ')
@@ -56,7 +56,50 @@ if __name__ == "__main__":
 
 
     tag_stream = LabeledLineSentence(list_articleContents, list_label)
+    ####################################################################################
+    model = Doc2Vec.load('../models/ko_Doc2vec_model1')
 
+    model.infer_vector(list_articleContents[1].split())
+
+    len(list_articleContents)
+
+    X = []
+    import numpy as np
+
+    X = np.array(X)
+    for items in list_articleContents[:10000]:
+        X.append(model.infer_vector(items.split()))
+
+    from sklearn.cluster import KMeans, DBSCAN
+    from sklearn import metrics
+    db = DBSCAN(eps=0.4, min_samples=5, metric='cosine', n_jobs=-1).fit(X)
+
+
+    np.unique(db.labels_)
+    sum(db.labels_==5)
+
+    import numpy as np
+    cluster = KMeans(8, n_jobs=-1)
+    cluster.fit(X)
+    cluster.score(X)
+
+    temp = np.array(list_articleContents[:10000])
+    temp[db.labels_==5][:20]
+    cluster.labels_[:5]
+
+
+    from nltk.cluster import kmeans, cosine_distance
+    temp_cluster = kmeans.KMeansClusterer(8, cosine_distance, repeats=3)
+    clusters = temp_cluster.cluster_vectorspace(X,trace=True)
+    temp_cluster.means()
+    temp_cluster.classify_vectorspace(X[0])
+    temp_cluster.classify_vectorspace(X[1])
+    temp_cluster.classify_vectorspace(X[2])
+    temp_cluster.classify_vectorspace(X[3])
+    temp_cluster.classify_vectorspace(X[4])
+    ######################################################################
+    import time
+    print(time.time())
     print('started')
     model = Doc2Vec(tag_stream, alpha=0.05, min_alpha=0.025, window=15, size=50, iter=15, min_count=5, workers=cpu_count())
     model.save('../models/ko_Doc2vec_model1')
@@ -70,12 +113,11 @@ if __name__ == "__main__":
     model3 = Doc2Vec(tag_stream, alpha=0.05, min_alpha=0.025, window=15, size=50, iter=40, min_count=5, workers=cpu_count())
     model.save('../models/ko_Doc2vec_model3')
 
-    model_test = Doc2Vec.load('deep_copy')
-    Doc2Vec.
+
     model.docvecs.most_similar(['005_1017333'])
     model_test.most_similar(['005_1017333'])
     model_test = model_test.docvecs.load('doc_vec_save3')
-    model_test.mo
+
 
     a
 
