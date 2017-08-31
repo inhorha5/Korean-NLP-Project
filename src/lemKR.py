@@ -13,8 +13,15 @@ def ko_lemmatize(inputString):
     Takes in a sentence or a document and returns the lemmatized version of it. Returns only nouns.
     """
     mecab = Mecab()
-    Lemmatized_String = ' '.join(mecab.nouns(inputString))
-    return Lemmatized_String
+    tag_set = {'N', 'V'}
+    temp = mecab.pos(inputString)
+    Lem_temp = []
+    for pair in temp:
+        if pair[1][0] in tag_set:
+            Lem_temp.append(pair[0])
+        elif pair[1] == 'SL':
+            Lem_temp.append(pair[0])
+    return ' '.join(Lem_temp)
 
 def Create_Lem_Column(df):
     """

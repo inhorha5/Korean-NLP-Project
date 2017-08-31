@@ -1,4 +1,6 @@
-# This file isn't meant to be run again.
+# This code is only for manual bootstraping use only.
+
+#This file is meant to crawl through www.1min.kr for the daily top 20 trending search terms from naver.com
 
 import pandas as pd
 import requests
@@ -8,7 +10,7 @@ from bs4 import BeautifulSoup
 
 days_to_search_back = 365
 start_date = '20170809'
-# As of Aug 28, this was the most recent record from this site. It seems this site doesn't update anymore.
+# As of Aug 28, this was the most recent record from this site. It seems this site doesn't update anymore or it's on temporary hiatus.
 # Later, write a program to scrape directly from the source: http://datalab.naver.com/keyword/realtimeList.naver
 
 if __name__=="__main__":
@@ -30,10 +32,3 @@ if __name__=="__main__":
     with open("../data/top_search_trend_record.csv", "w") as text_file:
         writer = csv.writer(text_file,  lineterminator='\n')
         writer.writerows(top_search_list)
-"""
-    trend_list = []
-    with open("../data/top_search_trend_record.csv", "r") as text_file:
-        reader = csv.reader(text_file)
-        for item in reader:
-            search_list.append(item)
-"""
