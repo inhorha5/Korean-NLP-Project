@@ -1,3 +1,25 @@
+"""
+    This is a code dump file for personal future reference.
+"""
+
+
+import pandas as pd
+path = '../data/Data_1_yr_new.1.json'
+df = pd.read_json(path,orient='records', dtype={"articleID":'object', "articleDate":"datetime64[ns]"})
+
+df.loc[df['articleID'].str.len()==10, 'articleID'] = df.loc[df['articleID'].str.len()==10, 'articleID'].str.replace('_','_0000')
+df.loc[df['articleID'].str.len()==11, 'articleID'] = df.loc[df['articleID'].str.len()==11, 'articleID'].str.replace('_','_000')
+df.to_json(path, orient='records',date_format='iso')
+
+df = pd.read_json('../data/Update_pack.json',orient='records', dtype={"articleID":'object', "articleDate":"datetime64[ns]"})
+df.head(1)
+df.groupby(['NewsOutlet'])['articleID'].max()
+# ELASTIC SEARCH ID #############################################################
+    first = es.search(index='ko_news_articles', body={'query':\
+                                    {'match': \
+                                        {'articleID':\
+                                            {'query':'020_0003090649', "fuzziness":0, 'max_expansions':30}}}})
+    first
 # Emotion data thing ############################################################
 from collections import Counter
 like = []
@@ -356,3 +378,47 @@ if __name__ == "__main__":
         p.close()
 
         df.to_json('Data_1_yr_new.'+str(counter)+'.json', orient='records',date_format='iso')
+
+# Clustering stuff ##############################################################
+
+
+    clusterer = HDBSCAN( metric = 'seuclidean', V=np.ones(vectors.shape[1])).fit(vectors)
+    np.unique(clusterer.labels_)
+    for label in np.unique(clusterer.labels_):
+        print(Titles[clusterer.labels_==label][:20], '\n')
+
+    db = DBSCAN(eps=0.30, min_samples=4, metric='cosine', n_jobs=-1).fit(vectors)
+    np.unique(db.labels_)
+    sum(db.labels_==-1)
+    for label in np.unique(db.labels_):
+        print(Titles[db.labels_==label][:20], '\n')
+
+    from sklearn.cluster import MeanShift, AffinityPropagation
+    db = MeanShift(cluster_all=False, n_jobs=-1).fit(vectors)
+    np.unique(db.labels_)
+    sum(db.labels_==-1)
+    for label in np.unique(db.labels_):
+        print(Titles[db.labels_==label][:20], '\n')
+
+    from sklearn.metrics.pairwise import pairwise_distances
+    distance = pairwise_distances(vectors, metric='cosine')
+    db = AffinityPropagation(affinity ='precomputed')
+    db = db.fit(distance.astype('float64'))
+    np.unique(db.labels_)
+    sum(db.labels_==-1)
+    for label in np.unique(db.labels_):
+        print(Titles[db.labels_==label][:20], '\n')
+
+    import pyclustering.cluster as pcc
+    from pyclustering.cluster import xmeans
+    from pyclustering.cluster.xmeans import splitting_type
+
+    xmeans_instance = xmeans.xmeans(vectors,[vectors[0], vectors[1], vectors[2]], ccore=False)
+    xmeans_instance.process()
+
+    clusters = xmeans_instance.get_clusters()
+    len(clusters)
+    for item in clusters:
+        for index in item[:15]:
+            print(Titles[index])
+        print('\n')

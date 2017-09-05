@@ -286,6 +286,7 @@ def Update():
     p = Pool(10)
     Article_ids = Get_LatestArticle_ids()
     df_list = p.map(Update_new_articles_to_data, list(range(len(source_id_list))))
+    p.close()
 
     # for i in range(len(source_id_list)):
     #     df_list.append(Update_new_articles_to_data(i))

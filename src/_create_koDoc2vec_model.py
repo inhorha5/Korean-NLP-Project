@@ -70,9 +70,7 @@ if __name__ == "__main__":
     for items in list_articleContents[:10000]:
         X.append(model.infer_vector(items.split()))
 
-    from sklearn.cluster import KMeans, DBSCAN
-    from sklearn import metrics
-    db = DBSCAN(eps=0.4, min_samples=5, metric='cosine', n_jobs=-1).fit(X)
+
 
 
     np.unique(db.labels_)
