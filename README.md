@@ -20,7 +20,7 @@ Key technologies include: Elasticsearch, KoNLPy, Word2Vec, and HDBSCAN.
     * [For Non-Window Python 3](https://bitbucket.org/eunjeon/mecab-ko-dic)
  * **Networkx:** pip install networkx
  * **PyTagCloud:** [Instructions](https://github.com/atizo/PyTagCloud)
-  * Add Korean font to python3/site-packages/pytagcloud and edit .json file
+    * Add Korean font to python3/site-packages/pytagcloud and edit .json file
  * **Googletrans:** [Instructions](https://pypi.python.org/pypi/googletrans) (optional)
 
 ## Basic usage process:
