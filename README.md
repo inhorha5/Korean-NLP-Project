@@ -1,5 +1,7 @@
 # Korean-NLP-Project
 
+###### Last Edit: Sept 8, 2017
+
 ## Overview
 A data science project about using NLP techniques on Korean news articles. Attempts to achieve a quick, unsupervised, automatic, and dynamic topic clustering on news articles retrieved from a keyword. The articles are retrieved from a local Elasticsearch database that can be updated in real-time.
 
