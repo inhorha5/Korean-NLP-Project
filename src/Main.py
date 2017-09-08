@@ -1,3 +1,8 @@
+# WRITTEN IN PYTHON 3.6
+# 2017.09.08 InHo (Edward) Rha
+# This code was written for personal educational use.
+
+
 import scraper, lemKR, elastic, summarizer
 import time, csv, re
 import pandas as pd
@@ -5,52 +10,56 @@ import numpy as np
 from hdbscan import HDBSCAN
 from sklearn.metrics.pairwise import pairwise_distances
 from collections import Counter
+from multiprocessing import Pool
 
-
-# WRITTEN IN PYTHON 3.6
-# 2017.08.28 Edward Rha
-# This code is written for personal educational use.
 
 def Update_and_index_to_ES():
-    """
+    '''
     Gets new articles that haven't been previously scraped and indexes them to ElasticSearch.
-    """
+    '''
+
     # Scrape Latest Articles
     scraper.Update_LatestArticle_ids()
     df = scraper.Update()
     df = lemKR.Create_Lem_Column(df)
     df.to_json('../data/Most_recent_scrape.json', orient='records', date_format="iso")
+
     # Input data to Elastic Search index
     elastic.Feed_to_ES(df)
+
     # Update article ids
     scraper.Update_LastUpdatedArticle_ids(scraper.Get_LatestArticle_ids())
 
 
 def Update_emotion_data():
-    """
-    Updates the emotion data for the articles with the difference between scraping date and published date being less than 64 hours.
-    Only updates 10000 articles at once so it might need to be run multiple times to update more articles than that.
-    ## Make it pool multiple requests later for faster query.
-    """
+    '''
+    Updates the sentiment data from articles.
+    (Only the ones with the scraping timestamp that is within 64 hours of the published timestamp)
+    '''
+
     articleIDs, articleType, esIDs = elastic.Get_articles_to_update_emotions(num_of_articles=10000)
     Emotion_List = []
-    for i in range(len(articleIDs)):
-        Emotion_List.append(scraper.Get_Emotion(articleType[i], articleIDs[i][:3], articleIDs[i][4:]))
+
+    p = Pool(10)
+    Emotion_List = p.map(scraper.Get_Emotion(articleType[i], articleIDs[i][:3], articleIDs[i][4:]), list(range(len(articleIDs))))
+    p.close()
+
     elastic.Feed_updated_emotions(Emotion_List, esIDs)
     if len(articleIDs) >= 10000:
         Update_emotion_data()
 
 
 def Query_data(search_string, num_of_articles=1000, date=time.strftime("%Y-%m-%d"), host='localhost', port=9200, index='ko_news_articles'):
-    """
+    '''
         Input:  String,
                 number of related articles to return,
                 origin date point (default=now),
                 ES host address
                 ES port number
                 index name
-        Output: Tuple of (list of search results, list of 'relevance' scores)
-    """
+        Output: Tuple (list of search results, list of 'relevance' scores)
+    '''
+
     search_results = elastic.Get_relevant_articles(search_string, num_of_articles=num_of_articles, date=date, host=host, port=port, index=index)
     contents = np.array([search_results[x]['_source'] for x in range(len(search_results))])
     scores = np.array([search_results[x]['_score'] for x in range(len(search_results))])
@@ -58,12 +67,14 @@ def Query_data(search_string, num_of_articles=1000, date=time.strftime("%Y-%m-%d
 
 
 # def Translate(input_text):
-#     """
+#     '''
 #         Input: List of strings
 #         Output: List of strings
+#     ----------------------------------------------------------------------------
 #     Translates list of strings through Google Translate
 #     requires 'pip install googletrans'
-#     """
+#     '''
+#
 #     from googletrans import Translator
 #     translator = Translator()
 #     translated = translator.translate(input_text, src='ko', dest='en')
@@ -71,10 +82,12 @@ def Query_data(search_string, num_of_articles=1000, date=time.strftime("%Y-%m-%d
 
 
 def Get_cluster_labels(input_data, Doc2Vec_model):
-    """
+    '''
         Input: List of Results from search query, pre-loaded Doc2Vec_model (to prevent re-loading each time)
         Output: List of cluster labels
-    """
+    ----------------------------------------------------------------------------
+    '''
+
     Lem_words = [result_list[x]['Lemmatized'].split() for x in range(len(result_list))]
     vectors = [Doc2Vec_model.infer_vector(document) for document in Lem_words]
 
@@ -85,10 +98,13 @@ def Get_cluster_labels(input_data, Doc2Vec_model):
 
 
 def Make_word_cloud(input_data, cluster_labels):
-    """
-        Input: List of Results from search query, list of cluster labels
+    '''
+        Input:  List of Results from search query, list of cluster labels
+        Output: None
+    ----------------------------------------------------------------------------
     Creates and saves a wordcloud for each cluster at '../image_outputs'
-    """
+    '''
+
     import pytagcloud
     labels = np.unique(cluster_labels)
     for label in labels:
@@ -103,10 +119,13 @@ def Make_word_cloud(input_data, cluster_labels):
 
 
 def Make_emotion_graph(input_data, cluster_labels):
-    """
-        Input: List of Results from search query, list of cluster labels
+    '''
+        Input:  List of Results from search query, list of cluster labels
+        Output: None
+    ----------------------------------------------------------------------------
     Creates and saves a bar graph of the emotion data for each cluster at '../image_outputs'
-    """
+    '''
+
     import matplotlib.pyplot as plt
     Emotions = np.array([input_data[x]['Emotion'] for x in range(len(input_data))])
     labels = np.unique(cluster_labels)
@@ -127,9 +146,10 @@ def Make_emotion_graph(input_data, cluster_labels):
 
 
 def Delete_image_output_folder():
-    """
+    '''
     Deletes all the files inside '../image_outputs'
-    """
+    '''
+
     import os, shutil
     folder = '../image_outputs'
     for the_file in os.listdir(folder):
@@ -143,6 +163,8 @@ def Delete_image_output_folder():
 
 if __name__=="__main__":
     ############## UPDATE DATABASE
+    ### For real time updating, create a separate file with these functions and loop them on a interval.
+    ### Must edit the functions if the ElasticSearch location isn't 'localhost:9200'
     # Update_emotion_data()
     # Update_and_index_to_ES()
 
@@ -151,7 +173,7 @@ if __name__=="__main__":
     Doc2Vec_model = Doc2Vec.load('../models/ko_Doc2vec_model1')
 
     ############## SEARCH AND MAP THE RESULTS INTO VECTORSPACE. THEN CLUSTER
-    result_list, scores = Query_data('삼성', num_of_articles=1000, date='2017-09-03')
+    result_list, scores = Query_data('삼성', num_of_articles=1000)
     cluster_labels, label_probabilities = Get_cluster_labels(result_list, Doc2Vec_model)
 
     ############## MAKE WORDCLOUD AND EMOTION BAR GRAPH
@@ -167,7 +189,7 @@ if __name__=="__main__":
             writer.writerow(Titles[cluster_labels==label][:20])
 
     ############## OUTPUT 3 MOST IMPORTANT SENTENCES PER CLUSTER TO '../text_outputs/Output_sentences.txt'
-    # WARNING. THIS IS A TIME-CONSUMING PROCESS. NOISE CLUSTER (-1) IS EXCLUDED FROM THE PROCESS
+    ############## WARNING. THIS IS A TIME-CONSUMING PROCESS. NOISE CLUSTER (-1) IS EXCLUDED FROM THE PROCESS
     # from summarizer import TextRank
     # summaries = []
     # s = time.clock()

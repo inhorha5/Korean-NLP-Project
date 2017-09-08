@@ -2,6 +2,9 @@
 # SOURCE: http://blog.theeluwin.kr/post/146188165713/summariz3
 # https://github.com/theeluwin/textrankr
 
+# Slightly modified by InHo (Edward) Rha on 2017.09.08
+
+
 import re
 import itertools
 import networkx
