@@ -159,14 +159,14 @@ if __name__=="__main__":
     Make_word_cloud(result_list, cluster_labels)
     Make_emotion_graph(result_list, cluster_labels)
 
-    ############## OUTPUT UP TO 20 ARTICLE TITLES PER CLUSTER TO '../Output_titles.txt'
+    ############## OUTPUT UP TO 20 ARTICLE TITLES PER CLUSTER TO '../text_outputs/Output_titles.txt'
     Titles = np.array([result_list[x]['articleTitle'] for x in range(len(result_list))])
-    with open("../Output_titles.txt", "w") as text_file:
+    with open("../text_outputs/Output_titles.txt", "w") as text_file:
         writer = csv.writer(text_file,  lineterminator='\n\n', delimiter='\n')
         for label in np.unique(cluster_labels):
             writer.writerow(Titles[cluster_labels==label][:20])
 
-    ############## OUTPUT 3 MOST IMPORTANT SENTENCES PER CLUSTER TO '../Output_sentences.txt'
+    ############## OUTPUT 3 MOST IMPORTANT SENTENCES PER CLUSTER TO '../text_outputs/Output_sentences.txt'
     # WARNING. THIS IS A TIME-CONSUMING PROCESS. NOISE CLUSTER (-1) IS EXCLUDED FROM THE PROCESS
     # from summarizer import TextRank
     # summaries = []
@@ -175,7 +175,7 @@ if __name__=="__main__":
     #     contents = '. '.join([result_list[cluster_labels==label][x]['articleContents'] for x in range(len(result_list[cluster_labels==label]))])
     #     textrank = TextRank(contents)
     #     summaries.append(textrank.summarize())
-    # with open("../Output_sentences.txt", "w") as text_file:
+    # with open("../text_outputs/Output_sentences.txt", "w") as text_file:
     #     for item in summaries:
     #         text_file.write(item+'\r\n\r\n')
     # t = time.clock()
