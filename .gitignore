@@ -103,4 +103,4 @@ ENV/
 # data
 data/
 logs/
-1year/
+models/
