@@ -54,6 +54,7 @@ Key technologies include: Elasticsearch, KoNLPy, Word2Vec, and HDBSCAN.
 
 ## Future Works
  * Allow Elasticsearch address parameters to be inputted (Currently only localhost:9200)
+ * Add internet disconnect detection for scraper
  * Improve search algorithm
  * Untapped sentiment data for analysis
  * Add automatic and continuous Doc2Vec training
