@@ -57,6 +57,7 @@ Key technologies include: Elasticsearch, KoNLPy, Word2Vec, and HDBSCAN.
  * Improve search algorithm
  * Untapped sentiment data for analysis
  * Add automatic and continuous Doc2Vec training
+ * Implement the Phraser model (model exists but isn't implemented due to uncertainty of its performance)
  * Improve text processing
     * Improve author name extraction algorithm
     * Improve noise and template filtering algorithm (ex. delete all '동아일보', '포토' articles)
