@@ -1,6 +1,6 @@
 # Korean-NLP-Project
 
-###### Last Edit: Sept 8, 2017
+###### Last Edit: Sept 12, 2017
 
 ## Overview
 
@@ -35,6 +35,8 @@ Key technologies include: Elasticsearch, KoNLPy, Word2Vec, and HDBSCAN.
 
 ## Model Flowchart
 ![Model diagram](/Diagram.png)
+
+[A more in-depth explanation of the model can be found here.](/DETAILS.md)
 
 ## Data source
  * The news articles are from the Naver's news hub: http://news.naver.com/main/officeList.nhn
